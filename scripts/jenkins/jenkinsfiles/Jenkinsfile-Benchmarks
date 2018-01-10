@@ -1,6 +1,7 @@
 @Library('test-shared-library') _
 
-def DEFAULT_NODE_LABEL = 'docker && !mr-0xc8'
+// FIXME temporarily exclude mr-0xc11
+def DEFAULT_NODE_LABEL = 'docker && !mr-0xc8 && !mr-0xc11'
 
 def defineTestStages = null
 def pipelineContext = null
@@ -38,8 +39,6 @@ withCustomCommitStates(scm, 'h2o-ops-personal-auth-token', 'H2O-3 Pipeline') {
           defineTestStages = load('h2o-3/scripts/jenkins/groovy/defineTestStages.groovy')
         }
       }
-      // FIXME remove
-      error "WIP"
       defineTestStages(pipelineContext)
     }
   }
