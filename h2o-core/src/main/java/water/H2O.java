@@ -2006,7 +2006,9 @@ final public class H2O {
     long time7 = System.currentTimeMillis();
     RuntimeMXBean rtBean = ManagementFactory.getRuntimeMXBean();
     Log.debug("H2O launch parameters: "+ARGS.toString());
-    Log.debug("Boot class path: "+ rtBean.getBootClassPath());
+    if (rtBean.isBootClassPathSupported()) {
+      Log.debug("Boot class path: " + rtBean.getBootClassPath());
+    }
     Log.debug("Java class path: "+ rtBean.getClassPath());
     Log.debug("Java library path: "+ rtBean.getLibraryPath());
 
