@@ -1,7 +1,6 @@
 @Library('test-shared-library') _
 
-// FIXME temporarily exclude mr-0xc11
-def DEFAULT_NODE_LABEL = 'docker && !mr-0xc8 && !mr-0xc11'
+def DEFAULT_NODE_LABEL = 'docker && !mr-0xc8'
 
 def defineTestStages = null
 def pipelineContext = null
