@@ -38,6 +38,8 @@ withCustomCommitStates(scm, 'h2o-ops-personal-auth-token', 'H2O-3 Pipeline') {
           defineTestStages = load('h2o-3/scripts/jenkins/groovy/defineTestStages.groovy')
         }
       }
+      // FIXME remove
+      error "WIP"
       defineTestStages(pipelineContext)
     }
   }
