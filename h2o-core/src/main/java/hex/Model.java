@@ -2167,7 +2167,7 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
                 d2 = (col == 0) ? mmp.labelIndex : mmp.classProbabilities[col - 1];
                 break;
               case DimReduction:
-                d2 = ((DimReductionModelPrediction) p).dimensions[col];
+                d2 = ((DimReductionModelPrediction) p).reconstructed[col];    // look at the reconstructed matrix
                 break;
             }
             expected_preds[col] = d;
