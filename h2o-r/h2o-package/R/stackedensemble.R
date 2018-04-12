@@ -120,7 +120,8 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
   model@model$model_summary <- capture.output({
     print_ln <- function(...) cat(..., sep = "
 ")
-    print_ln("Summary of Base Learners:")
+    print_ln("Summary of Base Learners:
+")
     baselearner_summary <- Reduce(
       function(x, y) {
         base_learner_summarizer <- function(model) {
@@ -134,24 +135,25 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
     print(baselearner_summary)
     
     print_ln("
-Summary of Metalearners:")
+Summary of Metalearners:
+")
     print_ln(paste0(
-      "  Metalearner algorithm: ",
+      "Metalearner algorithm: ",
       ifelse(length(metalearner_algorithm) > 1, "glm", metalearner_algorithm)))
 
     if (metalearner_nfolds != 0) {
-      print_ln("  Metalearners cross-validation fold assignment:")
+      print_ln("Metalearners cross-validation fold assignment:")
       print_ln(paste0(
-        "    Fold assignment scheme: ",
+        "  Fold assignment scheme: ",
         ifelse(length(metalearner_fold_assignment) > 1, "Random", metalearner_fold_assignment)))
-      print_ln(paste0("    Number of folds: ", metalearner_nfolds))
+      print_ln(paste0("  Number of folds: ", metalearner_nfolds))
       print_ln(paste0(
-        "    Fold column: ",
-        ifelse(is.null(metalearner_fold_column), "NULL",metalearner_fold_column )))
+        "  Fold column: ",
+        ifelse(is.null(metalearner_fold_column), "NULL", metalearner_fold_column )))
     }
     
     if (!missing(metalearner_params))
-      print_ln(paste0("    Metalearners hyperparameters: ", metalearner_params_json))
+      print_ln(paste0("Metalearners hyperparameters: ", metalearner_params_json))
     
   })
   class(model@model$model_summary) <- "h2o.stackedEnsemble.summary"
