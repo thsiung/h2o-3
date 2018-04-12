@@ -28,9 +28,7 @@
 #'        classification problems. Must be one of: "AUTO", "Random", "Modulo", "Stratified".
 #' @param metalearner_fold_column Column with cross-validation fold index assignment per observation for cross-validation of the metalearner.
 #' @param keep_levelone_frame \code{Logical}. Keep level one frame used for metalearner training. Defaults to FALSE.
-#' @param metalearner_params Parameters for metalearner algorithm Defaults to NULL.
-#' @param seed Seed for random numbers; passed through to the metalearner algorithm. Defaults to -1 (time-based random number)
-#'        Defaults to -1 (time-based random number).
+#' @param metalearner_params Parameters for metalearner algo Defaults to NULL.
 #' @examples
 #' 
 #' # See example R code here:
@@ -46,7 +44,6 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
                                 metalearner_fold_assignment = c("AUTO", "Random", "Modulo", "Stratified"),
                                 metalearner_fold_column = NULL,
                                 keep_levelone_frame = FALSE,
-                                seed = -1,
                                 metalearner_params = NULL 
                                 ) 
 {
@@ -81,8 +78,8 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
   args <- .verify_dataxy(training_frame, x, y)
   parms$response_column <- args$y
 
-  baselearners <- base_models
-  if (length(base_models) == 0) stop('base_models is empty')
+ baselearners <- base_models
+ if (length(base_models) == 0) stop('base_models is empty')
   # If base_models contains models instead of ids, replace with model id
   for (i in 1:length(base_models)) {
     if (inherits(base_models[[i]], 'H2OModel')) {
@@ -91,9 +88,7 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
   }
  
   if (!missing(metalearner_params))
-      parms$metalearner_params <- 
-        metalearner_params_json <- 
-          as.character(toJSON(metalearner_params, pretty = TRUE))
+      parms$metalearner_params <- metalearner_params_json <- as.character(toJSON(metalearner_params, pretty = TRUE))
   if (!missing(model_id))
     parms$model_id <- model_id
   if (!missing(validation_frame))
@@ -110,17 +105,16 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
     parms$metalearner_fold_column <- metalearner_fold_column
   if (!missing(keep_levelone_frame))
     parms$keep_levelone_frame <- keep_levelone_frame
-  if (!missing(seed))
-    parms$seed <- seed
   # Error check and build model
   model <- .h2o.modelJob('stackedensemble', parms, h2oRestApiVersion = 99)
-  #Convert metalearner_params back to list if not NULL
+  # Convert metalearner_params back to list if not NULL
   if (!missing(metalearner_params)) {
       model@parameters$metalearner_params <- list(fromJSON(model@parameters$metalearner_params))[[1]] #Need the `[[ ]]` to avoid a nested list
   }
 
   model@model$model_summary <- capture.output({
-    print_ln <- function(...) cat(..., sep = "\n")
+    print_ln <- function(...) cat(..., sep = "
+")
     print_ln("Summary of Base Learners:")
     baselearner_summary <- Reduce(
       function(x, y) {
@@ -134,7 +128,8 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
       baselearners)
     print(baselearner_summary)
     
-    print_ln("\nSummary of Metalearners:")
+    print_ln("
+Summary of Metalearners:")
     print_ln(paste0(
       "  Metalearner algorithm: ",
       ifelse(length(metalearner_algorithm) > 1, "glm", metalearner_algorithm)))
@@ -155,9 +150,6 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
     
   })
   class(model@model$model_summary) <- "h2o.stackedEnsemble.summary"
-
+        
   return(model)
 }
-
-#' @export
-print.h2o.stackedEnsemble.summary <- function(x, ...) cat(x, sep = "\n")
