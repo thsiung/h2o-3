@@ -277,7 +277,7 @@ def gen_module(schema, algo, module):
         yield "  }"
         yield " "
         yield "  if (!missing(metalearner_params))"
-        yield "      parms$metalearner_params <- metalearner_params_json <- as.character(toJSON(metalearner_params, pretty = TRUE))"
+        yield "      parms$metalearner_params <- as.character(toJSON(metalearner_params, pretty = TRUE))"
     for param in schema["parameters"]:
         if param["name"] in ["ignored_columns", "response_column", "training_frame", "max_confusion_matrix_size"]:
             continue
@@ -336,27 +336,20 @@ def gen_module(schema, algo, module):
         yield "  }"
         yield """
   model@model$model_summary <- capture.output({
+
     print_ln <- function(...) cat(..., sep = "\n")
-    print_ln("Summary of Base Learners:\n")
-    baselearner_summary <- Reduce(
-      function(x, y) {
-        base_learner_summarizer <- function(model) {
-          cbind(
-            list(algorithm = model@algorithm),
-            model@model$model_summary)
-        }
-        rbind(base_learner_summarizer(x), base_learner_summarizer(y))
-      },
-      baselearners)
-    print(baselearner_summary)
+
+    print_ln("Base Learners (count by algorithm type):")
+    print(table(unlist(lapply(baselearners, function(baselearner) baselearner@algorithm))))
     
-    print_ln("\nSummary of Metalearners:\n")
+    
+    print_ln("\nMetalearner:\n")
     print_ln(paste0(
       "Metalearner algorithm: ",
       ifelse(length(metalearner_algorithm) > 1, "glm", metalearner_algorithm)))
 
     if (metalearner_nfolds != 0) {
-      print_ln("Metalearners cross-validation fold assignment:")
+      print_ln("Metalearner cross-validation fold assignment:")
       print_ln(paste0(
         "  Fold assignment scheme: ",
         ifelse(length(metalearner_fold_assignment) > 1, "Random", metalearner_fold_assignment)))
@@ -367,7 +360,7 @@ def gen_module(schema, algo, module):
     }
     
     if (!missing(metalearner_params))
-      print_ln(paste0("Metalearners hyperparameters: ", metalearner_params_json))
+      print_ln(paste0("Metalearner hyperparameters: ", parms$metalearner_params))
     
   })
   class(model@model$model_summary) <- "h2o.stackedEnsemble.summary"

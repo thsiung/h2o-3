@@ -91,7 +91,7 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
   }
  
   if (!missing(metalearner_params))
-      parms$metalearner_params <- metalearner_params_json <- as.character(toJSON(metalearner_params, pretty = TRUE))
+      parms$metalearner_params <- as.character(toJSON(metalearner_params, pretty = TRUE))
   if (!missing(model_id))
     parms$model_id <- model_id
   if (!missing(validation_frame))
@@ -118,31 +118,23 @@ h2o.stackedEnsemble <- function(x, y, training_frame,
   }
 
   model@model$model_summary <- capture.output({
+
     print_ln <- function(...) cat(..., sep = "
 ")
-    print_ln("Summary of Base Learners:
-")
-    baselearner_summary <- Reduce(
-      function(x, y) {
-        base_learner_summarizer <- function(model) {
-          cbind(
-            list(algorithm = model@algorithm),
-            model@model$model_summary)
-        }
-        rbind(base_learner_summarizer(x), base_learner_summarizer(y))
-      },
-      baselearners)
-    print(baselearner_summary)
+
+    print_ln("Base Learners (count by algorithm type):")
+    print(table(unlist(lapply(baselearners, function(baselearner) baselearner@algorithm))))
+    
     
     print_ln("
-Summary of Metalearners:
+Metalearner:
 ")
     print_ln(paste0(
       "Metalearner algorithm: ",
       ifelse(length(metalearner_algorithm) > 1, "glm", metalearner_algorithm)))
 
     if (metalearner_nfolds != 0) {
-      print_ln("Metalearners cross-validation fold assignment:")
+      print_ln("Metalearner cross-validation fold assignment:")
       print_ln(paste0(
         "  Fold assignment scheme: ",
         ifelse(length(metalearner_fold_assignment) > 1, "Random", metalearner_fold_assignment)))
@@ -153,7 +145,7 @@ Summary of Metalearners:
     }
     
     if (!missing(metalearner_params))
-      print_ln(paste0("Metalearners hyperparameters: ", metalearner_params_json))
+      print_ln(paste0("Metalearner hyperparameters: ", parms$metalearner_params))
     
   })
   class(model@model$model_summary) <- "h2o.stackedEnsemble.summary"
