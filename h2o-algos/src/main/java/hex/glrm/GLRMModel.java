@@ -50,7 +50,7 @@ import java.util.ArrayList;
 public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMModel.GLRMOutput>
         implements Model.GLRMArchetypes {
 
-
+  public Key<Frame> _xFactorkey;  // store key of x factor generated from dataset prediction
   //--------------------------------------------------------------------------------------------------------------------
   // Input parameters
   //--------------------------------------------------------------------------------------------------------------------
@@ -188,7 +188,9 @@ public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMMo
 
   @Override protected Futures remove_impl( Futures fs ) {
     if (_output._init_key != null) _output._init_key.remove(fs);
+    if (!_xFactorkey.equals(_output._representation_key)) _xFactorkey.remove(fs);
     if (_output._representation_key != null) _output._representation_key.remove(fs);
+
     return super.remove_impl(fs);
   }
 
@@ -220,6 +222,7 @@ public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMMo
     int ncols = _output._names.length;
     assert ncols == adaptedFr.numCols();
     String prefix = "reconstr_";
+    _xFactorkey = gen_representation_key(orig);
 
     // Need [A,X,P] where A = adaptedFr, X = loading frame, P = imputed frame
     // Note: A is adapted to original training frame, P has columns shuffled so cats come before nums!
@@ -227,21 +230,17 @@ public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMMo
     Frame loadingFrm = null;  // get this from DKV or generate it from scratch
     // call resconstruct only if test frame key and training frame key matches plus frame dimensions match as well
     if (!orig._key.equals(_parms._train) || !(orig.numRows() == _parms.train().numRows()) && (orig.numCols() == _parms.train().numCols())) {
- //     loadingFrm = DKV.get(_output._representation_key).get();
- //   else {  // use glrm mojo and make this one fresh
       // need to generate the X matrix and put it in as a frame ID.  Mojo predict will return one row of x as a double[]
-      DKV.remove(_output._representation_key);  // remove this key, we will generate a new one.
       GLRMGenX gs = new GLRMGenX(this, _parms._k);
       gs.doAll(gs._k, Vec.T_NUM, orig);
-      _output._representation_key = Key.make(_output._representation_name); // make a new key for x matrix
-      _output._representation_name = _output._representation_key.toString();
       String[] loadingFrmNames = new String[gs._k];
       for (int index=1; index <= gs._k; index++)
         loadingFrmNames[index-1] = "Arch"+index;
       String[][] loadingFrmDomains = new String[gs._k][];
-      DKV.put(gs.outputFrame(_output._representation_key,loadingFrmNames, loadingFrmDomains));
+      DKV.put(gs.outputFrame(_xFactorkey,loadingFrmNames, loadingFrmDomains));
     }
-    loadingFrm = DKV.get(_output._representation_key).get();
+  //  Key newXKey = gen_representation_key(orig);
+    loadingFrm = DKV.get(_xFactorkey).get();
     fullFrm.add(loadingFrm);
     String[][] adaptedDomme = adaptedFr.domains();
     Vec anyVec = fullFrm.anyVec();
@@ -261,6 +260,13 @@ public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMMo
     DKV.put(f);
     gs._mb.makeModelMetrics(GLRMModel.this, orig, null, null);   // save error metrics based on imputed data
     return f;
+  }
+
+  public Key<Frame> gen_representation_key(Frame fr) {
+    if (fr._key == _parms.train()._key)
+      return _output._representation_key;
+    else
+      return Key.make("GLRMLoading_"+fr._key);
   }
 
   @Override protected Frame predictScoreImpl(Frame orig, Frame adaptedFr, String destination_key, Job j, boolean computeMetrics, CFuncRef customMetricFunc) {
@@ -408,7 +414,7 @@ public class GLRMModel extends Model<GLRMModel, GLRMModel.GLRMParameters, GLRMMo
 
     // Append loading frame X for calculating XY
     Frame fullFrm = new Frame(adaptedFr);
-    Frame loadingFrm = DKV.get(_output._representation_key).get();
+    Frame loadingFrm = DKV.get(gen_representation_key(frame)).get();
     fullFrm.add(loadingFrm);
 
     GLRMScore gs = new GLRMScore(ncols, _parms._k, false).doAll(fullFrm);
