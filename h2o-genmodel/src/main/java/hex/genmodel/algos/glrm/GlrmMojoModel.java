@@ -27,10 +27,10 @@ public class GlrmMojoModel extends MojoModel {
   public int _nnums;
   public double[] _normSub;
   public double[] _normMul;
-  public long _seed;
+  public long _seed;  // added to ensure reproducibility
   public boolean _transposed;
   public boolean _reverse_transform;
-  public boolean _predictFromModel = false;  // change to true if predicted by from model
+  public boolean _predictFromModel = false;  // change to true if used from model, added to ensure reproducibility
 
   // We don't really care about regularization of Y since it is changed during scoring
 
@@ -49,7 +49,7 @@ public class GlrmMojoModel extends MojoModel {
   private double alpha = 1.0;  // Do not shared across class.
   private static final double DOWN_FACTOR = 0.5;
   private static final double UP_FACTOR = Math.pow(1.0/DOWN_FACTOR, 1.0/4);
-  public long _rcnt = 0;  // increment per row
+  public long _rcnt = 0;  // increment per row and can be changed to different values to ensure reproducibility
 
   static {
     //noinspection ConstantAssertCondition,ConstantConditions
@@ -128,18 +128,12 @@ public class GlrmMojoModel extends MojoModel {
       }
     }
 
-    // Step 3: return the result
-    // System.out.println("obj = " + obj + ", alpha = " + alpha + ", n_iters = " + iters);
     System.arraycopy(x, 0, preds, 0, _ncolX);
     return preds;
   }
 
   // impute data from x and archetypes
   public double[] impute_data(double[] xfactor, double[] preds) {
-
-    if (this._rcnt < 5)
-      System.out.println("_rnct is "+this._rcnt+ "and x factor is "+xfactor[0]);
-
     assert preds.length == _nnums + _ncats;
 
     // Categorical columns

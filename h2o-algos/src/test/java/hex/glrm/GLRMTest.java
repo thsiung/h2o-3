@@ -415,14 +415,12 @@ public class GLRMTest extends TestUtil {
       System.out.println("Createframe parameters: rows: "+numRows+" cols:"+numCols+" seed: "+cf.seed);
 
       Frame trainMultinomial = Scope.track(cf.execImpl().get());
-      double tfrac = 0.2;//10.0/trainMultinomial.numRows();
+      double tfrac = 0.2;
       SplitFrame sf = new SplitFrame(trainMultinomial, new double[]{1-tfrac, tfrac}, new Key[] {Key.make("train.hex"), Key.make("test.hex")});
       sf.exec().get();
       Key[] ksplits = sf._destination_frames;
-    //  Frame tr = DKV.get(ksplits[0]).get();
-     // Frame te = DKV.get(ksplits[1]).get();
-      Frame tr = parse_test_file(Key.make("train.hex"), "/Users/wendycwong/temp/tr.csv");
-      Frame te = parse_test_file(Key.make("test.hex"), "/Users/wendycwong/temp/te.csv");
+      Frame tr = DKV.get(ksplits[0]).get();
+      Frame te = DKV.get(ksplits[1]).get();
       Scope.track(tr);
       Scope.track(te);
 
@@ -436,11 +434,9 @@ public class GLRMTest extends TestUtil {
       parms._gamma_x = 0;
       parms._gamma_y = 0;
       parms._seed=12345;
-      parms._init=GlrmInitialization.SVD;
 
       GLRM glrm = new GLRM(parms);
       GLRMModel model = glrm.trainModel().get();
-
       Scope.track_generic(model);
       Frame xfactorTr = DKV.get(model.gen_representation_key(tr)).get();
       Scope.track(xfactorTr);
