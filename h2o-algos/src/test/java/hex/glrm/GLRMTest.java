@@ -411,15 +411,19 @@ public class GLRMTest extends TestUtil {
       cf.has_response=false;
       cf.positive_response=true;
       cf.missing_fraction = 0.01;
-      cf.seed = System.currentTimeMillis();
+      //cf.seed = System.currentTimeMillis();
+      cf.seed = 12345;
       System.out.println("Createframe parameters: rows: "+numRows+" cols:"+numCols+" seed: "+cf.seed);
 
       Frame trainMultinomial = Scope.track(cf.execImpl().get());
-      SplitFrame sf = new SplitFrame(trainMultinomial, new double[]{0.8,0.2}, new Key[] {Key.make("train.hex"), Key.make("test.hex")});
+      double tfrac = 0.2;//10.0/trainMultinomial.numRows();
+      SplitFrame sf = new SplitFrame(trainMultinomial, new double[]{1-tfrac, tfrac}, new Key[] {Key.make("train.hex"), Key.make("test.hex")});
       sf.exec().get();
       Key[] ksplits = sf._destination_frames;
-      Frame tr = DKV.get(ksplits[0]).get();
-      Frame te = DKV.get(ksplits[1]).get();
+    //  Frame tr = DKV.get(ksplits[0]).get();
+     // Frame te = DKV.get(ksplits[1]).get();
+      Frame tr = parse_test_file(Key.make("train.hex"), "/Users/wendycwong/temp/tr.csv");
+      Frame te = parse_test_file(Key.make("test.hex"), "/Users/wendycwong/temp/te.csv");
       Scope.track(tr);
       Scope.track(te);
 
@@ -437,14 +441,14 @@ public class GLRMTest extends TestUtil {
       GLRMModel model = glrm.trainModel().get();
 
       Scope.track_generic(model);
-      Frame xfactorTr = DKV.get(model._output._representation_key).get();
+      Frame xfactorTr = DKV.get(model.gen_representation_key(tr)).get();
       Scope.track(xfactorTr);
       Frame predTr = model.score(tr);
       Scope.track(predTr);
       assert predTr.numRows()==xfactorTr.numRows(); // make sure x factor is derived from tr
       Frame predT = model.score(te); // predict on new data and compare with mojo
       Scope.track(predT);
-      Frame xfactorTe = DKV.get(model._output._representation_key).get();
+      Frame xfactorTe = DKV.get(model.gen_representation_key(te)).get();
       Scope.track(xfactorTe);
       assert predT.numRows()==xfactorTe.numRows(); // make sure x factor is derived from te
       Assert.assertTrue(model.testJavaScoring(te, predT,1e-6));
