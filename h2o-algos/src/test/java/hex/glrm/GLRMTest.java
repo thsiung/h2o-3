@@ -411,8 +411,7 @@ public class GLRMTest extends TestUtil {
       cf.has_response=false;
       cf.positive_response=true;
       cf.missing_fraction = 0.01;
-      //cf.seed = System.currentTimeMillis();
-      cf.seed = 12345;
+      cf.seed = System.currentTimeMillis();
       System.out.println("Createframe parameters: rows: "+numRows+" cols:"+numCols+" seed: "+cf.seed);
 
       Frame trainMultinomial = Scope.track(cf.execImpl().get());
@@ -436,6 +435,8 @@ public class GLRMTest extends TestUtil {
       parms._regularization_x = GlrmRegularizer.Quadratic;
       parms._gamma_x = 0;
       parms._gamma_y = 0;
+      parms._seed=12345;
+      parms._init=GlrmInitialization.SVD;
 
       GLRM glrm = new GLRM(parms);
       GLRMModel model = glrm.trainModel().get();

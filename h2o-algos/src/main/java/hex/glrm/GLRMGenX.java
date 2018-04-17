@@ -2,6 +2,7 @@ package hex.glrm;
 
 import hex.genmodel.GenModel;
 import hex.genmodel.MojoModel;
+import hex.genmodel.algos.glrm.GlrmMojoModel;
 import hex.genmodel.easy.EasyPredictModelWrapper;
 import hex.genmodel.easy.RowData;
 import hex.genmodel.easy.exception.PredictException;
@@ -27,9 +28,9 @@ import java.io.IOException;
 public class GLRMGenX  extends MRTask<GLRMGenX> {
   final GLRMModel _m;
   final int _k;   // store column size of X matrix
-  final EasyPredictModelWrapper _epmw;
+  EasyPredictModelWrapper _epmw;
   final double[] _features;
-  final GenModel _genmodel;
+  GenModel _genmodel;
 
   public GLRMGenX(GLRMModel m, int k) {
     _m = m;
@@ -45,6 +46,7 @@ public class GLRMGenX  extends MRTask<GLRMGenX> {
       ss.getStreamWriter().writeTo(os);
       os.close();
       _genmodel = MojoModel.load(filename);
+      ((GlrmMojoModel) _genmodel)._predictFromModel = true;
       _features = MemoryManager.malloc8d(_genmodel._names.length);
     } catch (IOException e1) {
       e1.printStackTrace();
@@ -57,11 +59,12 @@ public class GLRMGenX  extends MRTask<GLRMGenX> {
     EasyPredictModelWrapper.Config config = new EasyPredictModelWrapper.Config();
     _epmw = new EasyPredictModelWrapper(
             config.setModel(_genmodel).setConvertUnknownCategoricalLevelsToNa(true));
+
   }
 
   public void map(Chunk[] chks, NewChunk[] preds) {
     RowData rowData = new RowData();  // massage each row of dataset into RowData format
-
+    long rowStart = chks[0].start();
     for (int rid = 0; rid < chks[0]._len; ++rid) {
       for (int col = 0; col < _features.length; col++) {
         double val = chks[col].atd(rid);
@@ -71,7 +74,7 @@ public class GLRMGenX  extends MRTask<GLRMGenX> {
                         : Double.isNaN(val) ? val  // missing categorical values are kept as NaN, the score0 logic passes it on to bitSetContains()
                         : (int) val < _genmodel._domains[col].length ? _genmodel._domains[col][(int) val] : "UnknownLevel"); //unseen levels are treated as such
       }
-
+      ((GlrmMojoModel) _genmodel)._rcnt = rowStart+rid;
       AbstractPrediction p;
       try {
         p = _epmw.predict(rowData);
