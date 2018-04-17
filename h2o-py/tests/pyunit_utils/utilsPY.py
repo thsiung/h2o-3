@@ -192,7 +192,10 @@ def mojo_predict(model,tmpdir, mojoname,xFactor=False):
     p = subprocess.Popen(java_cmd, stdout=PIPE, stderr=STDOUT)
     o, e = p.communicate()
     pred_mojo = h2o.import_file(os.path.join(tmpdir, 'out_mojo.csv'), header=1)  # load mojo prediction into a frame and compare
-    return predict_h2o, pred_mojo
+    if xFactor:
+        return newTest.frame_id, pred_mojo
+    else:
+        return predict_h2o, pred_mojo
 
 # perform pojo predict.  Frame containing pojo predict is returned.
 def pojo_predict(model, tmpdir, pojoname):

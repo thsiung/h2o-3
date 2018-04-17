@@ -156,7 +156,7 @@ public class PredictCsv {
         }
         int lastData = datawidth-1;
         for (int index = 0; index < datawidth; index++) {  // add the numerical column names
-          String temp = returnXFactor?head+index:head+colnames[index];
+          String temp = returnXFactor?head+(index+1):head+colnames[index];
           output.write(temp);
 
           if (index < lastData )
@@ -267,6 +267,7 @@ public class PredictCsv {
               if (i < lastOne)
                 output.write(',');
             }
+            break;
           }
 
           default:
@@ -321,7 +322,7 @@ public class PredictCsv {
     System.out.println("     --separator Separator to be used in input file containing test data set.");
     System.out.println("     --decimal Use decimal numbers in the output (default is to use hexademical).");
     System.out.println("     --setConvertInvalidNum Will call .setConvertInvalidNumbersToNa(true) when loading models.");
-    System.out.println("     --xfactor will return the X factor derived from dataset instead of the reconstructed dataset.");
+    System.out.println("     --xfactor will return the X factor derived from dataset instead of the reconstructed dataset for GLRM mojo only.");
     System.out.println("");
     System.exit(1);
   }
@@ -335,7 +336,7 @@ public class PredictCsv {
         if (s.equals("--header")) continue;
         if (s.equals("--decimal"))
           useDecimalOutput = true;
-        if (s.equals("--xfactor"))
+        else if (s.equals("--xfactor"))
           returnXFactor=true;
         else if (s.equals("--setConvertInvalidNum"))
           setInvNumNA=true;
